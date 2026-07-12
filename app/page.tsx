@@ -17,7 +17,9 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   ShieldCheck,
-  BarChart2
+  BarChart2,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import ReportViewer from "@/components/ReportViewer";
 
@@ -57,6 +59,7 @@ export default function ResearchDashboard() {
   const [aggregatedData, setAggregatedData] = useState<any | null>(null);
   const [report, setReport] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState<string>("");
+  const [showTraceLogs, setShowTraceLogs] = useState<boolean>(false);
 
   useEffect(() => {
     const updateTime = () => {
@@ -74,6 +77,7 @@ export default function ResearchDashboard() {
     setReport(null);
     setAggregatedData(null);
     setErrorMessage(null);
+    setShowTraceLogs(false); // Reset collapse state on new run
     
     try {
       setCurrentStage("api_fetch");
@@ -116,21 +120,20 @@ export default function ResearchDashboard() {
     <main className="min-h-screen bg-[#05080f] text-slate-100 font-sans selection:bg-slate-800 selection:text-white relative pb-20">
       
       {/* 1. ATMOSPHERIC WALL STREET ARCHITECTURAL BACKDROP */}
-      {/* 1. ATMOSPHERIC WALL STREET ARCHITECTURAL BACKDROP */}
-<div 
-  className="fixed inset-0 z-0 opacity-40 bg-cover bg-center bg-no-repeat pointer-events-none filter contrast-110 saturate-50"
-  style={{ 
-    backgroundImage: `url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop')` 
-  }}
-/>
-{/* Lightened Gradient Overlay */}
-<div className="fixed inset-0 z-0 bg-gradient-to-b from-[#05080f]/60 via-[#070b14]/80 to-[#05080f] pointer-events-none" />
+      <div 
+        className="fixed inset-0 z-0 opacity-40 bg-cover bg-center bg-no-repeat pointer-events-none filter contrast-110 saturate-50"
+        style={{ 
+          backgroundImage: `url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop')` 
+        }}
+      />
+      {/* Lightened Gradient Overlay */}
+      <div className="fixed inset-0 z-0 bg-gradient-to-b from-[#05080f]/60 via-[#070b14]/80 to-[#05080f] pointer-events-none" />
       
       {/* ALL CONTENT LAYERED ABOVE BACKDROP */}
       <div className="relative z-10">
         
         {/* 2. NSE-STYLE REAL-TIME MACRO TICKER TAPE */}
-        <div className="bg-[#070b14]/90 border-b border-slate-850 backdrop-blur-md py-2 px-6 text-xs font-mono">
+        <div className="bg-[#070b14]/90 border-b border-slate-800/80 backdrop-blur-md py-2 px-6 text-xs font-mono">
           <div className="flex items-center justify-between max-w-7xl mx-auto">
             <div className="flex items-center gap-2 text-slate-400 font-bold tracking-wider shrink-0 pr-4 border-r border-slate-800">
               <Activity className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
@@ -156,20 +159,18 @@ export default function ResearchDashboard() {
         </div>
 
         {/* 3. INSTITUTIONAL HEADER */}
-        <header className="border-b border-slate-850 bg-[#070b14]/60 backdrop-blur-md sticky top-0 z-50">
+        <header className="border-b border-slate-800/80 bg-[#070b14]/60 backdrop-blur-md sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-slate-900 border border-slate-750 flex items-center justify-center shadow-inner">
+              <div className="w-9 h-9 rounded-lg bg-slate-900 border border-slate-700/80 flex items-center justify-center shadow-inner">
                 <Building2 className="w-4 h-4 text-slate-200" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="text-lg font-black tracking-tight text-white font-mono uppercase">
-                    APEX <span className="text-slate-600 font-light">//</span> INSTITUTIONAL TERMINAL
+                    APEX <span className="text-slate-600 font-light">$</span> INSTITUTIONAL TERMINAL
                   </h1>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400 font-bold">
-                    PRO v2.4
-                  </span>
+                  
                 </div>
                 <p className="text-xs text-slate-400">
                   Multi-Agent Autonomous Equity Valuation & Quantitative Alpha Engine
@@ -180,7 +181,7 @@ export default function ResearchDashboard() {
             <div className="flex items-center gap-3 text-xs font-mono">
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-slate-900/80 border border-slate-800 text-slate-300">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                <span>WS: CONNECTED</span>
+                <span>PoweredBy</span>
               </div>
               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-md bg-slate-900/80 border border-slate-800 text-slate-300">
                 <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
@@ -269,10 +270,10 @@ export default function ResearchDashboard() {
             </div>
           )}
 
-          {/* 6. MATTE TELEMETRY EXECUTION STEPPER */}
-          {currentStage !== "idle" && currentStage !== "error" && (
-            <div className="bg-[#090d18]/80 border border-slate-800/80 rounded-xl p-6 shadow-2xl space-y-6 backdrop-blur-md">
-              <div className="flex items-center justify-between border-b border-slate-850 pb-4">
+          {/* 6. MATTE TELEMETRY EXECUTION STEPPER (FULL VIEW DURING RUN) */}
+          {currentStage !== "idle" && currentStage !== "completed" && currentStage !== "error" && (
+            <div className="bg-[#090d18]/80 border border-slate-800/80 rounded-xl p-6 shadow-2xl space-y-6 backdrop-blur-md animate-fade-in">
+              <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
                 <div className="flex items-center gap-2 font-mono text-xs font-bold text-slate-300 uppercase tracking-wider">
                   <Terminal className="w-3.5 h-3.5 text-slate-400" />
                   <span>AUTONOMOUS NODE TRAVERSAL TRACE</span>
@@ -287,7 +288,7 @@ export default function ResearchDashboard() {
                 {STAGES.map((stage, idx) => {
                   const Icon = stage.icon;
                   const isCurrent = currentStage === stage.id;
-                  const isPast = currentStage === "completed" || STAGES.findIndex(s => s.id === currentStage) > idx;
+                  const isPast = STAGES.findIndex(s => s.id === currentStage) > idx;
 
                   return (
                     <div
@@ -311,7 +312,7 @@ export default function ResearchDashboard() {
                           }`}>
                             <Icon className="w-4 h-4" />
                           </div>
-                          <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-950 text-slate-500 border border-slate-850">
+                          <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-950 text-slate-500 border border-slate-800/80">
                             {stage.latency}
                           </span>
                         </div>
@@ -328,7 +329,7 @@ export default function ResearchDashboard() {
                         <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed font-sans">{stage.description}</p>
                       </div>
                       
-                      <div className="mt-4 pt-2.5 border-t border-slate-850 flex items-center justify-between text-[10px] font-mono">
+                      <div className="mt-4 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-[10px] font-mono">
                         <span className="text-slate-500">STATE:</span>
                         <span className={isCurrent ? "text-white font-bold" : isPast ? "text-emerald-400" : "text-slate-600"}>
                           {isCurrent ? "PROCESSING..." : isPast ? "RESOLVED" : "QUEUED"}
@@ -341,7 +342,40 @@ export default function ResearchDashboard() {
             </div>
           )}
 
-          {/* 7. TABBED WORKSPACE VIEW */}
+          {/* 7. COLLAPSIBLE TRACE RIBBON (APPEARS AFTER COMPLETION TO HIDE THE GRID) */}
+          {currentStage === "completed" && (
+            <div className="bg-[#090d18]/80 border border-slate-800/80 rounded-xl overflow-hidden transition-all backdrop-blur-md animate-fade-in">
+              <button 
+                onClick={() => setShowTraceLogs(!showTraceLogs)}
+                className="w-full px-5 py-3 flex items-center justify-between text-left font-mono text-xs text-slate-400 hover:text-slate-200 transition-colors bg-slate-950/60"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Terminal className="w-4 h-4 text-emerald-400" />
+                  <span>TRAVERSAL TRACE // <span className="text-emerald-400 font-bold">ALL 4 AI NODES RESOLVED (3,270ms Total)</span></span>
+                </div>
+                <div className="flex items-center gap-1.5 bg-slate-900 px-3 py-1 rounded border border-slate-800 text-[11px] text-slate-300 hover:border-slate-700">
+                  <span>{showTraceLogs ? "Hide Technical Logs" : "View Technical Logs"}</span>
+                  {showTraceLogs ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                </div>
+              </button>
+
+              {/* Expandable Technical Log Drawer */}
+              {showTraceLogs && (
+                <div className="p-5 bg-slate-950/90 border-t border-slate-800/80 font-mono text-xs text-slate-400 space-y-2 border-dashed max-h-[220px] overflow-y-auto custom-scrollbar">
+                  <div className="flex items-center justify-between border-b border-slate-900 pb-2 mb-2 text-[11px] text-slate-500">
+                    <span>EXECUTION STAGE</span>
+                    <span>LATENCY & STATUS</span>
+                  </div>
+                  <div><span className="text-slate-600">[000ms]</span> <span className="text-slate-300 font-bold">NODE 01 // Scraper:</span> Finnhub & FMP endpoints successfully queried. <span className="text-emerald-400 float-right">450ms // OK</span></div>
+                  <div><span className="text-slate-600">[450ms]</span> <span className="text-slate-300 font-bold">NODE 02 // Normalizer:</span> Normalized ratios, cleaned nulls, and structured schema. <span className="text-emerald-400 float-right">120ms // OK</span></div>
+                  <div><span className="text-slate-600">[570ms]</span> <span className="text-slate-300 font-bold">NODE 03 // Specialists:</span> Groq Llama 70B & Gemma 9B contextual metrics compiled. <span className="text-emerald-400 float-right">1800ms // OK</span></div>
+                  <div><span className="text-slate-600">[2370ms]</span> <span className="text-slate-300 font-bold">NODE 04 // Judge Consensus:</span> Final allocations calculated. Strategic thesis emitted. <span className="text-emerald-400 float-right">900ms // OK</span></div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 8. TABBED WORKSPACE VIEW (TAKES OVER THE VIEW) */}
           {report && (
             <ReportViewer 
               ticker={aggregatedData?.ticker || company.toUpperCase()} 

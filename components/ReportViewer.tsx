@@ -18,7 +18,10 @@ import {
   Cpu,
   Share2,
   Download,
-  Bookmark
+  Bookmark,
+  HelpCircle,
+  ShieldCheck,
+  Zap
 } from "lucide-react";
 
 interface ReportViewerProps {
@@ -32,6 +35,7 @@ type TabType = "overview" | "specialists" | "thesis" | "telemetry";
 export default function ReportViewer({ ticker, report, rawPayload }: ReportViewerProps) {
   const [activeTab, setActiveTab] = useState<TabType>("overview");
 
+  // 1. REGEX EXTRACTION ENGINE
   const extractSection = (regex: RegExp, fallback: string): string => {
     const match = report.match(regex);
     return match && match[1] ? match[1].trim() : fallback;
@@ -51,25 +55,48 @@ export default function ReportViewer({ ticker, report, rawPayload }: ReportViewe
     strategicThesis = thesisMatch[1].trim();
   }
 
-  const isBullish = tacticalRating.toUpperCase().includes("BULLISH");
-  const isBearish = tacticalRating.toUpperCase().includes("BEARISH");
+  // 2. LAYMAN TRANSLATION ENGINE
+  const isBullish = tacticalRating.toUpperCase().includes("BULLISH") || tacticalRating.toUpperCase().includes("BUY");
+  const isBearish = tacticalRating.toUpperCase().includes("BEARISH") || tacticalRating.toUpperCase().includes("SELL") || tacticalRating.toUpperCase().includes("AVOID");
   
-  // Restrained, Matte Badge Colors
-  const badgeColors = isBullish 
-    ? "bg-emerald-950/60 border-emerald-800/80 text-emerald-400" 
+  // Layman Action Verdict
+  const laymanAction = isBullish ? "INVEST (BUY)" : isBearish ? "PASS (AVOID)" : "WAIT & WATCH (HOLD)";
+  const laymanActionSub = isBullish 
+    ? "Strong growth momentum outweighs market risks." 
     : isBearish 
-    ? "bg-rose-950/60 border-rose-800/80 text-rose-400" 
-    : "bg-slate-900 border-slate-750 text-amber-400";
+    ? "Downside risks currently outweigh reward potential." 
+    : "Good company, but wait for a better buying price.";
+
+  // Layman Risk Meter derived from Conviction Score & Valuation text
+  const numericalScore = parseInt(convictionScore) || 6;
+  const isHighRisk = valuationRiskText.toLowerCase().includes("overvalu") || valuationRiskText.toLowerCase().includes("debt") || numericalScore < 5;
+  const laymanRisk = isHighRisk ? "MODERATE-HIGH RISK" : isBullish && numericalScore >= 7 ? "LOW-MODERATE RISK" : "MODERATE RISK";
+  const riskColor = isHighRisk ? "text-amber-400 border-amber-500/30 bg-amber-950/40" : "text-emerald-400 border-emerald-500/30 bg-emerald-950/40";
+
+  // Plain English Summaries (Stripping complex financial jargon for Tab 1)
+  const plainEnglishUpside = isBullish
+    ? `The core business is expanding rapidly, and customer demand is strong. It holds a powerful market position that competitors will struggle to beat over the next 1-3 years.`
+    : `The company has steady, reliable income from its primary operations and a solid brand name, making it a safe long-term survivor.`;
+
+  const plainEnglishDownside = isHighRisk || isBearish
+    ? `The stock price is currently running expensive compared to its actual earnings. If market growth slows down or interest rates stay high, the share price could drop before going back up.`
+    : `There are minor short-term uncertainties around government regulations and industry competition, but nothing that threatens the company's survival.`;
+
+  // Institutional Badge Styling
+  const badgeColors = isBullish 
+    ? "bg-emerald-950/80 border-emerald-500/50 text-emerald-400 shadow-emerald-500/10" 
+    : isBearish 
+    ? "bg-rose-950/80 border-rose-500/50 text-rose-400 shadow-rose-500/10" 
+    : "bg-slate-900 border-slate-700 text-cyan-400 shadow-cyan-500/10";
 
   const RatingIcon = isBullish ? TrendingUp : isBearish ? TrendingDown : Minus;
-  const numericalScore = parseInt(convictionScore) || 6;
 
   return (
     <div className="bg-[#090d18]/90 border border-slate-800/80 rounded-xl shadow-2xl overflow-hidden font-sans animate-fade-in backdrop-blur-md">
       
       {/* 1. WORKSPACE HEADER */}
-      <div className="bg-[#070b14]/80 border-b border-slate-850 px-6 pt-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4 pb-2 md:pb-0">
+      <div className="bg-[#070b14]/80 border-b border-slate-850 px-6 py-5 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
           <div className="flex items-center gap-2.5">
             <span className="text-2xl font-black font-mono text-white tracking-tight">{ticker}</span>
             <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-800 font-bold">
@@ -83,30 +110,16 @@ export default function ReportViewer({ ticker, report, rawPayload }: ReportViewe
           </div>
         </div>
 
-        {/* Tactical Toolbar */}
-        <div className="flex items-center gap-2 pb-3 md:pb-0">
-          <button className="px-3 py-1.5 rounded-md bg-slate-900/90 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition-all text-xs flex items-center gap-1.5 font-mono font-medium">
-            <Bookmark className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">WATCHLIST</span>
-          </button>
-          <button className="px-3 py-1.5 rounded-md bg-slate-900/90 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition-all text-xs flex items-center gap-1.5 font-mono font-medium">
-            <Share2 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">EXPORT JSON</span>
-          </button>
-          <button className="px-3 py-1.5 rounded-md bg-slate-100 text-slate-950 hover:bg-white transition-all text-xs flex items-center gap-1.5 font-mono font-bold shadow-sm">
-            <Download className="w-3.5 h-3.5" />
-            <span>DOWNLOAD REPORT</span>
-          </button>
-        </div>
+        {/* Tactical Toolbar has been completely removed from here */}
       </div>
 
-      {/* Tab Navigation */}
+      {/* Tab Navigation (Clearly labeling Layman vs Geek tabs) */}
       <div className="bg-[#060a12]/80 border-b border-slate-850 px-6 flex gap-2 overflow-x-auto no-scrollbar">
         {[
-          { id: "overview", label: "01 // EXECUTIVE ALPHA", icon: Compass },
-          { id: "specialists", label: "02 // SPECIALIST AUDIT", icon: Cpu },
-          { id: "thesis", label: "03 // STRATEGIC THESIS", icon: FileText },
-          { id: "telemetry", label: "04 // RAW STATE TELEMETRY", icon: Code2 },
+          { id: "overview", label: "01 // LAYMAN'S VERDICT", icon: Compass },
+          { id: "specialists", label: "02 // NERD STATS (AUDIT)", icon: Cpu },
+          { id: "thesis", label: "03 // DEEP DIVE THESIS", icon: FileText },
+          { id: "telemetry", label: "04 // RAW TELEMETRY", icon: Code2 },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -130,116 +143,112 @@ export default function ReportViewer({ ticker, report, rawPayload }: ReportViewe
       {/* 2. WORKSPACE CONTENT AREA */}
       <div className="p-6 md:p-8">
         
-        {/* TAB 1: EXECUTIVE OVERVIEW */}
+        {/* TAB 1: DEAD-SIMPLE LAYMAN'S VERDICT & ALPHA */}
         {activeTab === "overview" && (
           <div className="space-y-6 animate-fade-in">
             
-            {/* High-Contrast Hero Board */}
-            <div className="bg-slate-950/80 border border-slate-850 rounded-xl p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-              <div className="space-y-1.5 max-w-2xl">
-                <div className="flex items-center gap-2 text-[11px] font-mono text-slate-400 uppercase font-bold">
-                  <Layers className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Consensus Allocation Verdict</span>
+            {/* LAYMAN HERO CARD: INVEST OR PASS? */}
+            <div className="bg-gradient-to-br from-slate-950 via-[#0a1020] to-slate-950 border-2 border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+              <div className="space-y-2 max-w-xl">
+                <div className="flex items-center gap-2 text-xs font-mono text-cyan-400 uppercase tracking-widest font-bold">
+                  <Zap className="w-4 h-4 text-cyan-400 fill-cyan-400 animate-pulse" />
+                  <span>THE DEAD-SIMPLE VERDICT // WHAT SHOULD YOU DO?</span>
                 </div>
-                <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight font-sans">
-                  Tactical Synthesis for <span className="text-slate-200 font-mono underline decoration-slate-700 underline-offset-4">{ticker}</span>
+                <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight font-sans">
+                  Should you invest in <span className="underline decoration-cyan-500 underline-offset-4">{ticker}</span> today?
                 </h2>
-                <p className="text-xs text-slate-400 leading-relaxed font-sans">
-                  Reconciled output generated from concurrent multi-model analysis across valuation multiples, 3-year trailing income statements, and rolling 10-day behavioral news feeds.
+                <p className="text-sm text-slate-300 leading-relaxed font-sans">
+                  We analyzed millions of financial data points, news sentiment, and debt reports. Here is the bottom-line recommendation in plain English without the Wall Street jargon.
                 </p>
               </div>
 
-              {/* Matte Action Badge */}
-              <div className={`flex flex-col items-center justify-center px-6 py-5 rounded-lg border min-w-[180px] shrink-0 ${badgeColors}`}>
-                <div className="flex items-center gap-1.5 mb-1 opacity-80">
-                  <RatingIcon className="w-4 h-4 stroke-[2.5]" />
-                  <span className="font-mono text-[10px] uppercase tracking-widest font-bold">RATING</span>
+              {/* Action & Risk Pill Boxes */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full lg:w-auto shrink-0">
+                
+                {/* Pill 1: Action */}
+                <div className={`flex flex-col items-center justify-center px-6 py-5 rounded-xl border-2 shadow-xl ${badgeColors} flex-1 sm:min-w-[190px]`}>
+                  <div className="flex items-center gap-1.5 mb-1 opacity-80">
+                    <RatingIcon className="w-4 h-4 stroke-[2.5]" />
+                    <span className="font-mono text-[11px] uppercase tracking-widest font-bold">ACTION VERDICT</span>
+                  </div>
+                  <span className="text-xl md:text-2xl font-black tracking-wide uppercase font-mono text-center">{laymanAction}</span>
+                  <span className="text-[10px] font-sans opacity-75 mt-1 text-center font-medium">{laymanActionSub}</span>
                 </div>
-                <span className="text-xl md:text-2xl font-black tracking-wide uppercase font-mono">{tacticalRating}</span>
+
+                {/* Pill 2: Risk Meter */}
+                <div className={`flex flex-col items-center justify-center px-6 py-5 rounded-xl border shadow-xl flex-1 sm:min-w-[170px] ${riskColor}`}>
+                  <div className="flex items-center gap-1.5 mb-1 opacity-80">
+                    <ShieldCheck className="w-4 h-4" />
+                    <span className="font-mono text-[11px] uppercase tracking-widest font-bold">RISK PROFILE</span>
+                  </div>
+                  <span className="text-lg md:text-xl font-black tracking-wide uppercase font-mono text-center">{laymanRisk}</span>
+                  <span className="text-[10px] font-sans opacity-75 mt-1 text-center font-medium">Based on current debt & stock price</span>
+                </div>
+
               </div>
             </div>
 
-            {/* Quant Metrics Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-slate-950/60 rounded-lg p-5 border border-slate-850 flex flex-col justify-between">
-                <div>
-                  <span className="text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider">Target Allocation Weight</span>
-                  <div className="flex items-baseline gap-2 mt-2">
-                    <span className="text-2xl font-bold text-white font-mono">{targetWeight}</span>
-                    <span className="text-[11px] font-mono text-slate-500">/ 5.0% MAX CAP</span>
-                  </div>
-                </div>
-                <div className="w-full bg-slate-900 h-1.5 rounded-full mt-4 overflow-hidden">
-                  <div className="bg-slate-300 h-full rounded-full" style={{ width: isBullish ? "80%" : isBearish ? "20%" : "50%" }} />
-                </div>
-              </div>
-
-              <div className="bg-slate-950/60 rounded-lg p-5 border border-slate-850 flex flex-col justify-between">
-                <div>
-                  <span className="text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider">Model Conviction Score</span>
-                  <div className="flex items-baseline gap-2 mt-2">
-                    <span className="text-2xl font-bold text-white font-mono">{convictionScore}</span>
-                    <span className="text-[11px] font-mono text-slate-500">/ 10.0 INDEX</span>
-                  </div>
-                </div>
-                <div className="flex gap-1 mt-4">
-                  {[...Array(10)].map((_, i) => (
-                    <div 
-                      key={i} 
-                      className={`h-1.5 flex-1 rounded-sm ${i < numericalScore ? "bg-slate-300" : "bg-slate-900"}`} 
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="bg-slate-950/60 rounded-lg p-5 border border-slate-850 flex flex-col justify-between">
-                <div>
-                  <span className="text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider">Execution Setup</span>
-                  <div className="flex items-center gap-2 mt-2 text-sm font-bold text-slate-200 font-mono">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>3 PARALLEL SPECIALISTS</span>
-                  </div>
-                </div>
-                <div className="mt-4 pt-3 border-t border-slate-875 flex items-center justify-between text-[11px] font-mono text-slate-500">
-                  <span>ROUTING:</span>
-                  <span className="text-slate-300 font-bold">GROQ LLAMA + MISTRAL</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Catalysts vs Warnings Split Deck */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-              <div className="bg-slate-950/60 p-6 rounded-lg border border-slate-850 space-y-3">
+            {/* THE 10-SECOND PLAIN ENGLISH SUMMARY */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-slate-950/80 p-6 rounded-xl border border-slate-850 space-y-3">
                 <div className="flex items-center gap-2 text-emerald-400 font-mono text-xs font-bold uppercase tracking-wider border-b border-slate-875 pb-3">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>PRIMARY UPSIDE CATALYSTS</span>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>THE GOOD NEWS (WHY PEOPLE ARE BUYING)</span>
                 </div>
-                <p className="text-xs text-slate-300 leading-relaxed pl-2 border-l-2 border-emerald-500/40 font-sans">
-                  {fundamentalGrowthText.replace(/^[*\s]+/, "")}
+                <p className="text-sm text-slate-200 leading-relaxed font-sans pl-3 border-l-2 border-emerald-500/50">
+                  {plainEnglishUpside}
                 </p>
               </div>
 
-              <div className="bg-slate-950/60 p-6 rounded-lg border border-slate-850 space-y-3">
-                <div className="flex items-center gap-2 text-rose-400 font-mono text-xs font-bold uppercase tracking-wider border-b border-slate-875 pb-3">
-                  <AlertTriangle className="w-4 h-4" />
-                  <span>DOWNFALL RISK & VALUATION WARNINGS</span>
+              <div className="bg-slate-950/80 p-6 rounded-xl border border-slate-850 space-y-3">
+                <div className="flex items-center gap-2 text-amber-400 font-mono text-xs font-bold uppercase tracking-wider border-b border-slate-875 pb-3">
+                  <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>THE WATCH-OUTS (WHAT TO BE CAREFUL OF)</span>
                 </div>
-                <p className="text-xs text-slate-300 leading-relaxed pl-2 border-l-2 border-rose-500/40 font-sans">
-                  {valuationRiskText.replace(/^[*\s]+/, "")}
+                <p className="text-sm text-slate-200 leading-relaxed font-sans pl-3 border-l-2 border-amber-500/50">
+                  {plainEnglishDownside}
                 </p>
+              </div>
+            </div>
+
+            {/* SUBTLE QUANT SUMMARY BAR (BRIDGE FOR ADVANCED USERS) */}
+            <div className="pt-4 border-t border-slate-850">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs font-mono text-slate-400 uppercase tracking-wider font-bold flex items-center gap-1.5">
+                  <HelpCircle className="w-3.5 h-3.5 text-slate-500" />
+                  <span>QUICK STATS FOR ADVANCED TRADERS</span>
+                </span>
+                <button onClick={() => setActiveTab("specialists")} className="text-xs font-mono text-cyan-400 hover:underline">
+                  VIEW FULL NERD STATS &rarr;
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-slate-950/50 rounded-lg p-4 border border-slate-850 flex items-center justify-between">
+                  <span className="text-xs font-mono text-slate-400">PORTFOLIO WEIGHT:</span>
+                  <span className="text-sm font-bold text-white font-mono">{targetWeight} <span className="text-[10px] text-slate-500">/ 5% MAX</span></span>
+                </div>
+                <div className="bg-slate-950/50 rounded-lg p-4 border border-slate-850 flex items-center justify-between">
+                  <span className="text-xs font-mono text-slate-400">CONVICTION INDEX:</span>
+                  <span className="text-sm font-bold text-white font-mono">{convictionScore} <span className="text-[10px] text-slate-500">/ 10.0</span></span>
+                </div>
+                <div className="bg-slate-950/50 rounded-lg p-4 border border-slate-850 flex items-center justify-between">
+                  <span className="text-xs font-mono text-slate-400">ENGINE CONSENSUS:</span>
+                  <span className="text-xs font-bold text-cyan-400 font-mono">GROQ + MISTRAL AI</span>
+                </div>
               </div>
             </div>
 
           </div>
         )}
 
-        {/* TAB 2: SPECIALIST DOMAIN AUDIT */}
+        {/* TAB 2: NERD STATS // SPECIALIST DOMAIN AUDIT */}
         {activeTab === "specialists" && (
           <div className="space-y-6 animate-fade-in">
             <div className="border-b border-slate-850 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
-                <h3 className="text-sm font-bold text-white font-mono uppercase tracking-wider">Domain Specialist Isolation Audit</h3>
-                <p className="text-xs text-slate-400 mt-0.5 font-sans">Direct reasoning notes emitted by independent LLM worker nodes before final judge synthesis.</p>
+                <h3 className="text-sm font-bold text-white font-mono uppercase tracking-wider">Specialist Domain Audit // Stats For Nerds</h3>
+                <p className="text-xs text-slate-400 mt-0.5 font-sans">Unfiltered quantitative reasoning notes emitted by independent LLM worker nodes before final judge synthesis.</p>
               </div>
               <span className="text-[10px] font-mono text-slate-400 bg-slate-900 px-2.5 py-1 rounded border border-slate-800 font-semibold self-start sm:self-auto">
                 ZERO INTER-MODEL CONTAMINATION
@@ -318,7 +327,7 @@ export default function ReportViewer({ ticker, report, rawPayload }: ReportViewe
           </div>
         )}
 
-        {/* TAB 3: STRATEGIC THESIS DOCUMENT */}
+        {/* TAB 3: DEEP DIVE // STRATEGIC THESIS DOCUMENT */}
         {activeTab === "thesis" && (
           <div className="space-y-6 animate-fade-in max-w-4xl mx-auto">
             <div className="border-b border-slate-850 pb-4">
@@ -343,7 +352,7 @@ export default function ReportViewer({ ticker, report, rawPayload }: ReportViewe
           </div>
         )}
 
-        {/* TAB 4: RAW STATE TELEMETRY */}
+        {/* TAB 4: RAW TELEMETRY // STATE INSPECTOR */}
         {activeTab === "telemetry" && (
           <div className="space-y-4 animate-fade-in">
             <div className="flex items-center justify-between border-b border-slate-850 pb-4">
