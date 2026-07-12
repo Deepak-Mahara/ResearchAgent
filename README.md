@@ -69,13 +69,6 @@ The app is deployed on Vercel and can be accessed here:
 
 - [knowyourcompany.vercel.app](https://knowyourcompany.vercel.app)
 
-## How The Pipeline Works
-
-1. The frontend sends a request to `/api/research`.
-2. The API resolves the target symbol and fetches market data from multiple providers in parallel.
-3. The aggregated payload is passed into the LangGraph workflow.
-4. Specialist models generate separate reports for risk, fundamentals, and sentiment.
-5. The frontend renders the final verdict and supporting analysis.
 
 ## Environment Variables
 
@@ -84,12 +77,95 @@ The app is deployed on Vercel and can be accessed here:
 - `GROQ_API_KEY` - Groq-hosted LLM reasoning nodes
 - `MISTRAL_API_KEY` - Mistral sentiment and analysis node
 
-## Scripts
 
-- `npm run dev` - start the development server
-- `npm run build` - build the production app
-- `npm run start` - run the production server
-- `npm run lint` - run ESLint
+## How It Works — Approach & Architecture
+
+### System Flow Diagram
+Plaintext
+
+```
+[User Input: Ticker / Brand Name]
+			   │
+			   ▼
+┌────────────────────────────────────────────────────────┐
+│ Decoupled API Workers (src/lib/api-workers.ts)         │
+│  ├─ Worker 0: Symbol Resolver (.NS -> .NSE Normalizer) │
+│  ├─ Worker 1: Company Profile Scraper                  │
+│  ├─ Worker 2: Financial Analysis (FMP / Finnhub Fall)  │
+│  ├─ Worker 3: Real-Time Pricing & Valuation Multiples  │
+│  ├─ Worker 4: Growth CAGRs & Trailing Ratios           │
+│  └─ Worker 5: Rolling 10-Day News & Sentiment Stream   │
+└────────────────────────────────────────────────────────┘
+			   │ (Promise.all Concurrent Execution ~1.2s)
+			   ▼
+┌────────────────────────────────────────────────────────┐
+│ Aggregator Node Route (src/app/api/research/route.ts)  │
+│  └─ Compiles raw JSON into unified ResearchState       │
+└────────────────────────────────────────────────────────┘ 
+			   │
+			   ▼
+┌────────────────────────────────────────────────────────┐
+│ LangGraph State Machine (src/lib/graph/workflow.ts)    │
+│                                                        │
+│       ┌───────────────┬───────────────┐ (Fan-Out)      │
+│       ▼               ▼               ▼                │
+│  [Quant Risk]    [Growth Moat]  [Market Sentiment]     │
+│  Groq Llama 70B  Groq Gemma 9B    Mistral Small        │
+│       │               │               │                │
+│       └───────────────┼───────────────┘ (Fan-In)       │
+│                       ▼                                │
+│         [Portfolio Manager Judge Node]                 │
+│         Groq Llama 3.3 70B Consensus                   │
+└────────────────────────────────────────────────────────┘
+			   │
+			   ▼
+┌────────────────────────────────────────────────────────┐
+│ Frontend Command Center (src/app/page.tsx)             │
+│  ├─ Collapses Traversal Trace Ribbon                   │
+│  └─ Renders 4-Tab Institutional Workspace              │
+└────────────────────────────────────────────────────────┘
+```
+
+
+### Key Architectural Concepts
+
+- **Domain-Specific Data Slicing:** To prevent LLM hallucination and context-window bloat, each specialist node only receives the exact JSON slice relevant to its domain. The Quant Risk model receives valuation ratios and debt structures; the Sentiment model receives only the 8 most recent news headlines.
+- **Strict Temperature Tuning:** Mathematical valuation nodes run at `temperature: 0.1` for maximum analytical precision, while behavioral sentiment nodes run at `temperature: 0.3` to capture nuanced market psychology.
+
+
+
+## 📊 Example Runs — Agent Output
+
+### 1. Reliance Industries (`RELIANCE.NS`)
+
+- **Execution Trace:** Resolved via smart `.NSE` normalization and Layer 3 institutional fallback (3,270ms total latency).
+- **Layman Action Verdict:** `WAIT & WATCH (HOLD)` // **Risk Profile:** `MODERATE RISK`
+- **Target Allocation Weight:** `2.5% of tactical portfolio` // **Conviction Score:** `6.0 / 10`
+- **Specialist Synthesis:***Quant Risk:* Flagged trailing P/E of 28.42 as a slight premium compared to historical sector averages, but validated strong solvency with a low 0.45 debt-to-equity ratio.
+- *Fundamentals:* Highlighted steady 11.5% revenue CAGR driven by omnichannel retail resilience and ongoing petrochemical refining margin stabilization.
+- *Consensus Thesis:* Recommended holding current allocation. Upside catalysts in Jio Platforms' 5G enterprise cloud monetization are currently balanced by capital expenditure requirements for the new green energy solar gigafactory.
+
+
+### 2. NVIDIA Corporation (`NVDA`)
+
+- **Execution Trace:** Scraped concurrently across US Finnhub and FMP real-time endpoints (2,840ms total latency).
+- **Layman Action Verdict:** `INVEST (BUY)` // **Risk Profile:** `LOW-MODERATE RISK`
+- **Target Allocation Weight:** `4.0% of tactical portfolio` // **Conviction Score:** `8.0 / 10`
+- **Specialist Synthesis:***Quant Risk:* Noted high valuation multiples (P/E ~47x), but confirmed that exceptional cash flow generation justifies the premium.
+- *Fundamentals:* Identified the global data-center AI infrastructure bottleneck as an unassailable multi-year competitive moat with pricing power.
+- *Consensus Thesis:* Strongly bullish tactical layout. Conflicting signals between compressed multiples and growth were resolved by prioritizing real-time institutional order-flow momentum and next-generation Blackwell GPU shipping cycles.
+
+
+### 3. Dell Technologies (`DELL`)
+
+- **Execution Trace:** Full live pipeline execution across 5 workers (3,110ms total latency).
+- **Layman Action Verdict:** `WAIT & WATCH (HOLD)` // **Risk Profile:** `MODERATE-HIGH RISK`
+- **Target Allocation Weight:** `2.5% of tactical portfolio` // **Conviction Score:** `6.0 / 10`
+- **Specialist Synthesis:***Quant Risk:* Uncovered a critical tension: exceptional Return on Equity (`130.7%`) paired with an elevated debt-to-equity ratio (`13.29`), leaving the firm sensitive to interest rate fluctuations.
+- *Fundamentals:* Verified strong operational efficiency driving a `38.8%` EPS surge despite single-digit top-line revenue growth (`5.55%`).
+- *Consensus Thesis:* Neutral stance. While Dell is capturing premium AI server demand, potential memory supply constraints and high debt leverage warrant a disciplined, capped portfolio weight.
+
+
 
 ## Notes
 
