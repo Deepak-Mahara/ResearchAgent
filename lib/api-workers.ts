@@ -38,44 +38,44 @@ export async function fetchCompanyOverview(symbol: string) {
  * WORKER 2: Financial Analysis (Income Statement)
  */
 export async function fetchFinancialAnalysis(symbol: string) {
-  const res = await fetch(`https://financialmodelingprep.com/api/v3/income-statement/${symbol}?limit=3&apikey=${FMP_KEY}`);
+  const cleanSymbol = symbol.toUpperCase();
+  const res = await fetch(`https://financialmodelingprep.com/api/v3/income-statement/${cleanSymbol}?limit=3&apikey=${FMP_KEY}`);
   if (!res.ok) return { error: "Failed to fetch income statement history" };
   return res.json();
 }
 
-/**
- * WORKER 3: Stock Analysis (Real-time price + Key Metrics)
- */
 export async function fetchStockAnalysis(symbol: string) {
+  const cleanSymbol = symbol.toUpperCase();
   try {
     const [quoteRes, metricsRes] = await Promise.all([
-      fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_KEY}`),
-      fetch(`https://financialmodelingprep.com/api/v3/key-metrics/${symbol}?limit=1&apikey=${FMP_KEY}`)
+      fetch(`https://finnhub.io/api/v1/quote?symbol=${cleanSymbol}&token=${FINNHUB_KEY}`),
+      fetch(`https://financialmodelingprep.com/api/v3/key-metrics/${cleanSymbol}?limit=1&apikey=${FMP_KEY}`)
     ]);
 
     const quote = quoteRes.ok ? await quoteRes.json() : { error: "Failed quote fetch" };
     const metrics = metricsRes.ok ? await metricsRes.json() : { error: "Failed metrics fetch" };
 
-    return { quote, keyMetrics: metrics[0] || null };
+    return { quote, keyMetrics: Array.isArray(metrics) ? metrics[0] : null };
   } catch (err) {
     return { error: "Stock analysis pipeline encountered an error" };
   }
 }
 
-/**
- * WORKER 4: Company Growth (Growth rates, Margins, Ratios)
- */
 export async function fetchCompanyGrowth(symbol: string) {
+  const cleanSymbol = symbol.toUpperCase();
   try {
     const [growthRes, ratiosRes] = await Promise.all([
-      fetch(`https://financialmodelingprep.com/api/v3/financial-growth/${symbol}?limit=1&apikey=${FMP_KEY}`),
-      fetch(`https://financialmodelingprep.com/api/v3/ratios/${symbol}?limit=1&apikey=${FMP_KEY}`)
+      fetch(`https://financialmodelingprep.com/api/v3/financial-growth/${cleanSymbol}?limit=1&apikey=${FMP_KEY}`),
+      fetch(`https://financialmodelingprep.com/api/v3/ratios/${cleanSymbol}?limit=1&apikey=${FMP_KEY}`)
     ]);
 
     const growth = growthRes.ok ? await growthRes.json() : { error: "Failed growth fetch" };
     const ratios = ratiosRes.ok ? await ratiosRes.json() : { error: "Failed ratios fetch" };
 
-    return { growth: growth[0] || null, ratios: ratios[0] || null };
+    return { 
+      growth: Array.isArray(growth) ? growth[0] : null, 
+      ratios: Array.isArray(ratios) ? ratios[0] : null 
+    };
   } catch (err) {
     return { error: "Growth metrics pipeline encountered an error" };
   }

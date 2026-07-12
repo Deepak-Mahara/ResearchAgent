@@ -1,14 +1,14 @@
 // src/app/api/research/route.ts
-
 import { NextResponse } from "next/server";
-import {
-    fetchCompanyGrowth,
-    fetchCompanyOverview,
-    fetchFinancialAnalysis,
-    fetchNewsSentiment,
-    fetchStockAnalysis,
-    resolveCompanySymbol
+import { 
+  resolveCompanySymbol, 
+  fetchCompanyOverview, 
+  fetchFinancialAnalysis, 
+  fetchStockAnalysis, 
+  fetchCompanyGrowth, 
+  fetchNewsSentiment 
 } from "../../../lib/api-workers";
+import { researchGraph } from "../../../lib/graph/workflow";
 
 export async function POST(request: Request) {
   try {
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       fetchNewsSentiment(symbol)
     ]);
 
-    // Aggregate Research Node: Compile the payloads cleanly
+    // Compile aggregated payload
     const aggregatedResearchPayload = {
       ticker: symbol,
       timestamp: new Date().toISOString(),
@@ -46,14 +46,26 @@ export async function POST(request: Request) {
       recentNews: newsData
     };
 
-    // Return the aggregated research data
+    // Node 2: Execute the LangGraph Multi-Agent Reasoning Workflow!
+    // We pass the raw API data in as the initial state
+    const finalState = await researchGraph.invoke({
+      rawPayload: aggregatedResearchPayload
+    });
+
+    // Return both the raw aggregated data AND the AI-generated reports to the frontend
     return NextResponse.json({ 
       success: true, 
-      data: aggregatedResearchPayload 
+      data: aggregatedResearchPayload,
+      reports: {
+        riskValuation: finalState.riskValuationReport,
+        growthFundamentals: finalState.growthFundamentalsReport,
+        marketSentiment: finalState.marketSentimentReport,
+        finalDecision: finalState.finalInvestmentDecision
+      }
     });
 
   } catch (error: any) {
-    console.error("Aggregation node failure:", error);
-    return NextResponse.json({ error: "Internal Server Processing Error during data aggregation." }, { status: 500 });
+    console.error("LangGraph execution failure:", error);
+    return NextResponse.json({ error: error.message || "Internal Server Processing Error during AI execution." }, { status: 500 });
   }
 }
