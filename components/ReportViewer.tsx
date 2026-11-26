@@ -234,7 +234,7 @@ export default function ReportViewer({ ticker, report, rawPayload }: ReportViewe
                 </div>
                 <div className="bg-slate-950/50 rounded-lg p-4 border border-slate-850 flex items-center justify-between">
                   <span className="text-xs font-mono text-slate-400">ENGINE CONSENSUS:</span>
-                  <span className="text-xs font-bold text-cyan-400 font-mono">GROQ + MISTRAL AI</span>
+                  <span className="text-xs font-bold text-cyan-400 font-mono">GROQ GPT-OSS 20B</span>
                 </div>
               </div>
             </div>
@@ -275,7 +275,7 @@ export default function ReportViewer({ ticker, report, rawPayload }: ReportViewe
                 </div>
                 <div className="pt-4 border-t border-slate-875 flex items-center justify-between text-[10px] font-mono text-slate-500">
                   <span>MODEL:</span>
-                  <span className="text-slate-300 font-bold">GROQ / LLAMA-3.3-70B</span>
+                  <span className="text-slate-300 font-bold">GROQ / GPT-OSS-20B</span>
                 </div>
               </div>
 
@@ -297,7 +297,7 @@ export default function ReportViewer({ ticker, report, rawPayload }: ReportViewe
                 </div>
                 <div className="pt-4 border-t border-slate-875 flex items-center justify-between text-[10px] font-mono text-slate-500">
                   <span>MODEL:</span>
-                  <span className="text-slate-300 font-bold">GROQ / GEMMA-2-9B</span>
+                  <span className="text-slate-300 font-bold">GROQ / GPT-OSS-20B</span>
                 </div>
               </div>
 
@@ -319,7 +319,7 @@ export default function ReportViewer({ ticker, report, rawPayload }: ReportViewe
                 </div>
                 <div className="pt-4 border-t border-slate-875 flex items-center justify-between text-[10px] font-mono text-slate-500">
                   <span>MODEL:</span>
-                  <span className="text-slate-300 font-bold">MISTRAL / SMALL-LATEST</span>
+                  <span className="text-slate-300 font-bold">GROQ / GPT-OSS-20B</span>
                 </div>
               </div>
 

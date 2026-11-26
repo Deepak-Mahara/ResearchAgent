@@ -52,6 +52,14 @@ export async function POST(request: Request) {
       rawPayload: aggregatedResearchPayload
     });
 
+    const finalDecision = finalState.finalInvestmentDecision?.trim();
+    if (!finalDecision) {
+      return NextResponse.json(
+        { error: "The AI judge completed without producing a final report. Please retry." },
+        { status: 502 }
+      );
+    }
+
     // Return both the raw aggregated data AND the AI-generated reports to the frontend
     return NextResponse.json({ 
       success: true, 
@@ -60,7 +68,7 @@ export async function POST(request: Request) {
         riskValuation: finalState.riskValuationReport,
         growthFundamentals: finalState.growthFundamentalsReport,
         marketSentiment: finalState.marketSentimentReport,
-        finalDecision: finalState.finalInvestmentDecision
+        finalDecision
       }
     });
 

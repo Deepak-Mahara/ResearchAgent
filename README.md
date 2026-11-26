@@ -16,7 +16,7 @@ An institutional-style research dashboard for equity analysis. The app collects 
 - TypeScript
 - Tailwind CSS v4
 - LangGraph
-- Groq, Mistral, Finnhub, and Financial Modeling Prep APIs
+- Groq, Finnhub, and Financial Modeling Prep APIs
 
 ## Project Structure
 
@@ -48,7 +48,6 @@ FINNHUB_API_KEY=your_finnhub_api_key_here
 FMP_API_KEY=your_financial_modeling_prep_key_here
 
 GROQ_API_KEY=your_groq_api_key_here
-MISTRAL_API_KEY=your_mistral_api_key_here
 ```
 
 3. Start the development server.
@@ -75,7 +74,6 @@ The app is deployed on Vercel and can be accessed here:
 - `FINNHUB_API_KEY` - Finnhub search, profile, and quote data
 - `FMP_API_KEY` - Financial Modeling Prep financial statements and ratios
 - `GROQ_API_KEY` - Groq-hosted LLM reasoning nodes
-- `MISTRAL_API_KEY` - Mistral sentiment and analysis node
 
 
 ## How It Works — Approach & Architecture
@@ -110,12 +108,12 @@ Plaintext
 │       ┌───────────────┬───────────────┐ (Fan-Out)      │
 │       ▼               ▼               ▼                │
 │  [Quant Risk]    [Growth Moat]  [Market Sentiment]     │
-│  Groq Llama 70B  Groq Gemma 9B    Mistral Small        │
+│  Groq GPT-OSS 20B  Groq GPT-OSS 20B  Groq GPT-OSS 20B    │
 │       │               │               │                │
 │       └───────────────┼───────────────┘ (Fan-In)       │
 │                       ▼                                │
 │         [Portfolio Manager Judge Node]                 │
-│         Groq Llama 3.3 70B Consensus                   │
+│         Groq GPT-OSS 20B Consensus                     │
 └────────────────────────────────────────────────────────┘
 			   │
 			   ▼

@@ -36,7 +36,7 @@ interface StageStatus {
 const STAGES: StageStatus[] = [
   { id: "api_fetch", label: "Multi-Exchange Scraper", description: "Querying Finnhub & FMP endpoints for profiles, news, and quotes.", icon: Layers, latency: "450ms" },
   { id: "aggregation", label: "Data Normalization Engine", description: "Cross-referencing ratios, cleaning nulls, and structuring state schema.", icon: Cpu, latency: "120ms" },
-  { id: "llm_analysis", label: "Parallel AI Specialists", description: "Groq Llama 70B & Gemma 2 9B reasoning over valuation and moats.", icon: BrainCircuit, latency: "1800ms" },
+  { id: "llm_analysis", label: "Parallel AI Specialists", description: "Groq GPT-OSS 20B reasoning over valuation and moats.", icon: BrainCircuit, latency: "1800ms" },
   { id: "final_decision", label: "Consensus Judge Node", description: "Synthesizing conflicting signals into tactical allocation weights.", icon: TrendingUp, latency: "900ms" },
 ];
 
@@ -92,6 +92,11 @@ export default function ResearchDashboard() {
         throw new Error(result.error || "Failed inside data collection pipeline.");
       }
 
+      const finalDecision = result.reports?.finalDecision;
+      if (typeof finalDecision !== "string" || !finalDecision.trim()) {
+        throw new Error("The AI judge returned no final report. Please retry.");
+      }
+
       setCurrentStage("aggregation");
       setAggregatedData(result.data);
       await new Promise((res) => setTimeout(res, 400));
@@ -102,8 +107,8 @@ export default function ResearchDashboard() {
       setCurrentStage("final_decision");
       await new Promise((res) => setTimeout(res, 600));
       
+      setReport(finalDecision);
       setCurrentStage("completed");
-      setReport(result.reports.finalDecision);
     } catch (err: any) {
       console.error(err);
       setErrorMessage(err.message || "An unhandled execution trace failure occurred.");
@@ -368,7 +373,7 @@ export default function ResearchDashboard() {
                   </div>
                   <div><span className="text-slate-600">[000ms]</span> <span className="text-slate-300 font-bold">NODE 01 // Scraper:</span> Finnhub & FMP endpoints successfully queried. <span className="text-emerald-400 float-right">450ms // OK</span></div>
                   <div><span className="text-slate-600">[450ms]</span> <span className="text-slate-300 font-bold">NODE 02 // Normalizer:</span> Normalized ratios, cleaned nulls, and structured schema. <span className="text-emerald-400 float-right">120ms // OK</span></div>
-                  <div><span className="text-slate-600">[570ms]</span> <span className="text-slate-300 font-bold">NODE 03 // Specialists:</span> Groq Llama 70B & Gemma 9B contextual metrics compiled. <span className="text-emerald-400 float-right">1800ms // OK</span></div>
+                  <div><span className="text-slate-600">[570ms]</span> <span className="text-slate-300 font-bold">NODE 03 // Specialists:</span> Groq GPT-OSS 20B contextual metrics compiled. <span className="text-emerald-400 float-right">1800ms // OK</span></div>
                   <div><span className="text-slate-600">[2370ms]</span> <span className="text-slate-300 font-bold">NODE 04 // Judge Consensus:</span> Final allocations calculated. Strategic thesis emitted. <span className="text-emerald-400 float-right">900ms // OK</span></div>
                 </div>
               )}
